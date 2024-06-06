@@ -5,7 +5,7 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.http import HttpResponse
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from .forms import ImageCreateForm
+from .forms import ImageCreateForm, CommentForm
 from .models import Image
 
 from actions.utils import create_action
@@ -41,11 +41,17 @@ def image_detail(request, id, slug):
     image = get_object_or_404(Image, id=id, slug=slug)
     total_views = r.incr(f'image:{image.id}:views')
     r.zincrby('image_ranking', 1, image.id)
+    # List of active comments for this post
+    comments = image.comments.all()
+    # Form for users to comment
+    form = CommentForm()
     return render(request,
-                  'images/image/detail.html',
+                  'images/image/detail.html',   
                   {'section': 'images',
                    'image': image,
-                   'total_views': total_views})
+                   'total_views': total_views,
+                   'form': form,
+                   'comments': comments})
 
 @login_required
 @require_POST
@@ -99,3 +105,18 @@ def image_ranking(request):
                   'images/image/ranking.html',
                   {'section': 'images',
                    'most_viewed': most_viewed})
+
+@require_POST
+def image_comment(request, id, slug):
+    image = get_object_or_404(Image, id=id, slug=slug)
+    comment = None
+    form = CommentForm(data=request.POST)
+    if form.is_valid():
+        comment = form.save(commit=False)
+        comment.image = image
+        comment.user = request.user
+        comment.save()
+    return render(request, 'images/image/comment.html',
+                  {'form': form,
+                   'comment': comment,
+                   'image': image})

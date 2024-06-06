@@ -1,5 +1,5 @@
 from django import forms 
-from .models import Image
+from .models import Image, Comment
 
 from django.core.files.base import ContentFile
 from django.utils.text import slugify
@@ -39,4 +39,8 @@ class ImageCreateForm(forms.ModelForm):
         if commit:
             image.save()
         return image
-        
+
+class CommentForm(forms.ModelForm):
+    class Meta:
+        model = Comment
+        fields = ['text']

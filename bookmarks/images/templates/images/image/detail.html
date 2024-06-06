@@ -1,4 +1,7 @@
 {% extends "base.html" %}
+{% load static %}
+{% load thumbnail %}
+
 
 {% block title %}
     {{ image.title }}
@@ -34,7 +37,9 @@
             {% for user in image.users_like.all %}
                 <div>
                     {% if user.profile.photo %}
-                        <img src="{{ user.profile.photo.url }}">
+                        <img src="{% thumbnail user.profile.photo 100x100 %}">
+                    {% else %}
+                        <img src="{% static 'img/default.png' %}">
                     {% endif %}
                     <p>{{ user.first_name }}</p>
                 </div>
@@ -43,6 +48,25 @@
             {% endfor %}
         </div>
     {% endwith %}
+    <br><br><br><br><br><br><br><br><br><br>
+    {% with comments.count as total_comments %}
+    {% include "images/image/includes/comment_form.html" %}
+    <h2>
+      {{ total_comments }} comment{{ total_comments|pluralize }}
+    </h2>
+    {% endwith %}
+    {% for comment in comments %}
+        <div class="comment">
+        <p class="info">
+            Comment by {{ comment.user }} <span style="font-size: 12px;">{{ comment.created }}</span>                
+        </p>
+        
+        {{ comment.text|linebreaks }}
+        <hr>
+        </div>
+    {% empty %}
+        <p>There are no comments yet.</p>
+    {% endfor %}
 {% endblock content %}
 
 {% block domready %}
